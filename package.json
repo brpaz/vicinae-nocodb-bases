@@ -1,0 +1,57 @@
+{
+  "$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
+  "name": "nocodb-bases",
+  "title": "NocoDB Bases",
+  "description": "Quickly access your NocoDB bases",
+  "icon": "icon.png",
+  "author": "brpaz",
+  "license": "MIT",
+  "commands": [
+    {
+      "icon": "icon.png",
+      "name": "list",
+      "subtitle": "NocoDB Bases",
+      "title": "Search Bases",
+      "description": "List your NocoDB bases and open them in the browser",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "hostUrl",
+      "title": "NocoDB URL",
+      "description": "The base URL of your NocoDB instance (e.g. https://nocodb.example.com)",
+      "type": "textfield",
+      "placeholder": "https://nocodb.example.com",
+      "required": true
+    },
+    {
+      "name": "apiToken",
+      "title": "API Token",
+      "description": "A NocoDB API token, created under Account Settings > Tokens",
+      "type": "password",
+      "required": true
+    }
+  ],
+  "categories": [
+    "Productivity"
+  ],
+  "dependencies": {
+    "@vicinae/api": "^0.28.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.12",
+    "@types/react": "19.2.18",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "build": "vici build",
+    "dev": "vici develop",
+    "lint": "biome check src/ && vici lint",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "typecheck": "tsc --noEmit",
+    "check": "biome check --write ."
+  }
+}
