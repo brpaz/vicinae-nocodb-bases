@@ -3,11 +3,13 @@ export interface Preferences {
   apiToken: string;
 }
 
-export interface NocoTableEntry {
+export interface NocoBase {
+  id: string;
+  title: string;
   workspaceId: string;
-  baseId: string;
-  baseTitle: string;
-  tableId: string;
-  tableTitle: string;
-  viewId: string;
+}
+
+export interface NocoTable {
+  id: string;
+  title: string;
 }

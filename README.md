@@ -4,9 +4,8 @@
 
 ## 🎯 Features
 
-- Lists every table across every base on your self-hosted NocoDB instance, grouped by base, in one searchable list.
-- Open a table directly in your browser (its default view), or copy the link.
-- Results are cached for 5 minutes so repeat opens are instant; use **Refresh** to force a reload.
+- Lists every base on your self-hosted NocoDB instance.
+- Drill down into a base to search its tables, open one in your browser, or copy the link.
 
 ## 🚀 Getting Started
 
@@ -44,12 +43,12 @@ npm run dev
 
 ## 🧰 Usage
 
-Set the **NocoDB URL** and **API Token** preferences (an API token can be created under Account Settings > Tokens in NocoDB), then open **Search Tables**. Hit Enter on a table to open its default view in your browser, or use **Copy Link**.
+Set the **NocoDB URL** and **API Token** preferences (an API token can be created under Account Settings > Tokens in NocoDB), then open **Search Bases**. Select a base and use **View Tables** to drill down and search its tables, or **Open Base in Browser** / **Copy Link** to jump to the base itself.
 
 ### Requirements
 
 - A self-hosted NocoDB instance (OSS meta API — this doesn't target NocoDB Cloud's separate API).
-- The dashboard URL scheme (`/dashboard/#/v/<workspace>/<base>/<table>/<view>/`) was confirmed against a real instance, not from NocoDB's docs (which don't document it) — if your instance uses a different NocoDB version with a different URL scheme, opening a table may 404 even though the underlying data fetch is correct.
+- The dashboard URL scheme was reverse-engineered against a real instance (NocoDB's docs don't document it): `#/<workspace>/<base>` for a base, `#/v/<workspace>/<base>/<table>` for a table — deliberately **without** a view id. A 4-segment URL with a view id (`#/v/<ws>/<base>/<table>/<view>/`) has no matching server-side route on the version this was tested against: the client converts the hash into a real path once loaded, that path 404s, and NocoDB falls back to a bare `/v` landing page. If your instance uses a different NocoDB version, these links may behave differently.
 
 ## 📝 License
 

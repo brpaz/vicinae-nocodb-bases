@@ -1,4 +1,4 @@
-import type { NocoTableEntry } from '../types';
+import type { NocoBase, NocoTable } from '../types';
 
 const REQUEST_TIMEOUT_MS = 8000;
 
@@ -6,18 +6,14 @@ interface Workspace {
   id: string;
 }
 
-interface Base {
+interface BaseApi {
   id: string;
   title: string;
 }
 
-interface Table {
+interface TableApi {
   id: string;
   title: string;
-}
-
-interface View {
-  id: string;
 }
 
 interface ListResponse<T> {
@@ -66,23 +62,21 @@ async function nocoFetch<T>(
 }
 
 /**
- * Flattens every table across every base into one searchable list, each
- * carrying its default view's id — the "workspace" segment in a dashboard
- * URL is a routing artifact NocoDB keeps even for a single-workspace
- * self-hosted (OSS) instance, so a single workspace id is fetched once and
- * applied to every base/table (no per-base workspace lookup needed here).
+ * The "workspace" segment in a dashboard URL is a routing artifact NocoDB
+ * keeps even for a single-workspace self-hosted (OSS) instance, so a single
+ * workspace id is fetched once here and attached to every base.
  */
-export async function listTableEntries(
+export async function listBases(
   hostUrl: string,
   apiToken: string
-): Promise<NocoTableEntry[]> {
+): Promise<NocoBase[]> {
   const [{ list: workspaces }, { list: bases }] = await Promise.all([
     nocoFetch<ListResponse<Workspace>>(
       hostUrl,
       apiToken,
       '/api/v2/meta/workspaces'
     ),
-    nocoFetch<ListResponse<Base>>(hostUrl, apiToken, '/api/v2/meta/bases/'),
+    nocoFetch<ListResponse<BaseApi>>(hostUrl, apiToken, '/api/v2/meta/bases/'),
   ]);
 
   const workspaceId = workspaces[0]?.id;
@@ -90,44 +84,39 @@ export async function listTableEntries(
     throw new Error('No NocoDB workspace found');
   }
 
-  const entriesByBase = await Promise.all(
-    bases.map(async (base) => {
-      const { list: tables } = await nocoFetch<ListResponse<Table>>(
-        hostUrl,
-        apiToken,
-        `/api/v2/meta/bases/${base.id}/tables`
-      );
-
-      const entries = await Promise.all(
-        tables.map(async (table): Promise<NocoTableEntry | null> => {
-          const { list: views } = await nocoFetch<ListResponse<View>>(
-            hostUrl,
-            apiToken,
-            `/api/v2/meta/tables/${table.id}/views`
-          );
-          const defaultView = views[0];
-          if (!defaultView) {
-            return null;
-          }
-
-          return {
-            workspaceId,
-            baseId: base.id,
-            baseTitle: base.title,
-            tableId: table.id,
-            tableTitle: table.title,
-            viewId: defaultView.id,
-          };
-        })
-      );
-
-      return entries.filter((entry): entry is NocoTableEntry => entry !== null);
-    })
-  );
-
-  return entriesByBase.flat();
+  return bases.map((base) => ({ id: base.id, title: base.title, workspaceId }));
 }
 
-export function tableViewUrl(hostUrl: string, entry: NocoTableEntry): string {
-  return `${trimTrailingSlash(hostUrl)}/dashboard/#/v/${entry.workspaceId}/${entry.baseId}/${entry.tableId}/${entry.viewId}/`;
+export async function listTables(
+  hostUrl: string,
+  apiToken: string,
+  baseId: string
+): Promise<NocoTable[]> {
+  const { list: tables } = await nocoFetch<ListResponse<TableApi>>(
+    hostUrl,
+    apiToken,
+    `/api/v2/meta/bases/${baseId}/tables`
+  );
+
+  return tables.map((table) => ({ id: table.id, title: table.title }));
+}
+
+export function baseDashboardUrl(hostUrl: string, base: NocoBase): string {
+  return `${trimTrailingSlash(hostUrl)}/dashboard/#/${base.workspaceId}/${base.id}`;
+}
+
+/**
+ * Deliberately omits the view id: NocoDB's client-side router (at least on
+ * the version this was verified against) converts a hash deep-link into a
+ * real path once loaded, and a 4-segment path with a view id has no matching
+ * server-side route — it 404s and the app falls back to a bare "/v" landing
+ * page. A 3-segment table-only path was confirmed stable (verified via
+ * xdg-open + checking Firefox's history for the URL it actually settles on).
+ */
+export function tableUrl(
+  hostUrl: string,
+  base: NocoBase,
+  table: NocoTable
+): string {
+  return `${trimTrailingSlash(hostUrl)}/dashboard/#/v/${base.workspaceId}/${base.id}/${table.id}`;
 }
