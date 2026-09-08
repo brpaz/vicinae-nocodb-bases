@@ -101,22 +101,24 @@ export async function listTables(
   return tables.map((table) => ({ id: table.id, title: table.title }));
 }
 
+/**
+ * Bare "<workspace>/<base>[/<table>]" paths, no "/dashboard/", "#", or "/v/"
+ * prefix: NocoDB's client-side router converts a hash deep-link into a real
+ * path once loaded anyway, so the shorter form loads directly instead of
+ * going through that redirect. A path that also includes a view id has no
+ * matching server-side route on this NocoDB version — it 404s and falls back
+ * to a bare "/v" landing page, so the view id is deliberately omitted here.
+ * Verified against a real instance with `xdg-open`, checking Firefox's
+ * history for the URL it actually settles on.
+ */
 export function baseDashboardUrl(hostUrl: string, base: NocoBase): string {
-  return `${trimTrailingSlash(hostUrl)}/dashboard/#/${base.workspaceId}/${base.id}`;
+  return `${trimTrailingSlash(hostUrl)}/${base.workspaceId}/${base.id}`;
 }
 
-/**
- * Deliberately omits the view id: NocoDB's client-side router (at least on
- * the version this was verified against) converts a hash deep-link into a
- * real path once loaded, and a 4-segment path with a view id has no matching
- * server-side route — it 404s and the app falls back to a bare "/v" landing
- * page. A 3-segment table-only path was confirmed stable (verified via
- * xdg-open + checking Firefox's history for the URL it actually settles on).
- */
 export function tableUrl(
   hostUrl: string,
   base: NocoBase,
   table: NocoTable
 ): string {
-  return `${trimTrailingSlash(hostUrl)}/dashboard/#/v/${base.workspaceId}/${base.id}/${table.id}`;
+  return `${trimTrailingSlash(hostUrl)}/${base.workspaceId}/${base.id}/${table.id}`;
 }
