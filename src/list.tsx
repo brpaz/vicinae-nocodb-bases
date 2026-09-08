@@ -1,6 +1,7 @@
 import {
   Action,
   ActionPanel,
+  Cache,
   getPreferenceValues,
   Icon,
   Keyboard,
@@ -9,23 +10,53 @@ import {
   Toast,
 } from '@vicinae/api';
 import { useCallback, useEffect, useState } from 'react';
-import type { NocoBase, Preferences } from './types';
-import { baseDashboardUrl, listBases } from './utils/nocodb';
+import type { NocoTableEntry, Preferences } from './types';
+import { listTableEntries, tableViewUrl } from './utils/nocodb';
+
+const CACHE_KEY = 'table-entries';
+const cache = new Cache({ ttl: 5 * 60 * 1000 });
+
+function readCachedEntries(): NocoTableEntry[] {
+  const cached = cache.get(CACHE_KEY);
+  if (!cached) {
+    return [];
+  }
+
+  try {
+    return JSON.parse(cached) as NocoTableEntry[];
+  } catch {
+    return [];
+  }
+}
+
+function groupByBase(entries: NocoTableEntry[]): Map<string, NocoTableEntry[]> {
+  const groups = new Map<string, NocoTableEntry[]>();
+
+  for (const entry of entries) {
+    const group = groups.get(entry.baseTitle) ?? [];
+    group.push(entry);
+    groups.set(entry.baseTitle, group);
+  }
+
+  return groups;
+}
 
 export default function Command() {
   const { hostUrl, apiToken } = getPreferenceValues<Preferences>();
-  const [bases, setBases] = useState<NocoBase[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [entries, setEntries] = useState<NocoTableEntry[]>(readCachedEntries);
+  const [isLoading, setIsLoading] = useState(entries.length === 0);
 
   const load = useCallback(async () => {
     setIsLoading(true);
 
     try {
-      setBases(await listBases(hostUrl, apiToken));
+      const fresh = await listTableEntries(hostUrl, apiToken);
+      setEntries(fresh);
+      cache.set(CACHE_KEY, JSON.stringify(fresh));
     } catch (error) {
       await showToast({
         style: Toast.Style.Failure,
-        title: 'Failed to load bases',
+        title: 'Failed to load tables',
         message: error instanceof Error ? error.message : String(error),
       });
     } finally {
@@ -37,40 +68,41 @@ export default function Command() {
     load();
   }, [load]);
 
-  return (
-    <List isLoading={isLoading} searchBarPlaceholder="Search bases...">
-      {bases.map((base) => {
-        const url = baseDashboardUrl(hostUrl, base.id);
+  const entriesByBase = groupByBase(entries);
 
-        return (
-          <List.Item
-            key={base.id}
-            title={base.title}
-            // The native renderer rejects an explicit "subtitle": null (vs.
-            // the key being absent), which is what subtitle={undefined}
-            // serializes to — so this prop must be omitted entirely, not
-            // just passed an undefined value, when there's no description.
-            {...(base.description ? { subtitle: base.description } : {})}
-            icon={Icon.AppWindowList}
-            actions={
-              <ActionPanel>
-                <Action.OpenInBrowser title="Open in Browser" url={url} />
-                <Action.CopyToClipboard
-                  title="Copy Link"
-                  content={url}
-                  shortcut={Keyboard.Shortcut.Common.Copy}
-                />
-                <Action
-                  title="Refresh"
-                  icon={Icon.RotateClockwise}
-                  shortcut={Keyboard.Shortcut.Common.Refresh}
-                  onAction={load}
-                />
-              </ActionPanel>
-            }
-          />
-        );
-      })}
+  return (
+    <List isLoading={isLoading} searchBarPlaceholder="Search tables...">
+      {[...entriesByBase.entries()].map(([baseTitle, tables]) => (
+        <List.Section key={baseTitle} title={baseTitle}>
+          {tables.map((entry) => {
+            const url = tableViewUrl(hostUrl, entry);
+
+            return (
+              <List.Item
+                key={entry.tableId}
+                title={entry.tableTitle}
+                icon={Icon.AppWindowList}
+                actions={
+                  <ActionPanel>
+                    <Action.OpenInBrowser title="Open in Browser" url={url} />
+                    <Action.CopyToClipboard
+                      title="Copy Link"
+                      content={url}
+                      shortcut={Keyboard.Shortcut.Common.Copy}
+                    />
+                    <Action
+                      title="Refresh"
+                      icon={Icon.RotateClockwise}
+                      shortcut={Keyboard.Shortcut.Common.Refresh}
+                      onAction={load}
+                    />
+                  </ActionPanel>
+                }
+              />
+            );
+          })}
+        </List.Section>
+      ))}
     </List>
   );
 }

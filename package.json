@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
   "name": "nocodb-bases",
-  "title": "NocoDB Bases",
-  "description": "Quickly access your NocoDB bases",
+  "title": "NocoDB",
+  "description": "Quickly access the tables in your NocoDB bases",
   "icon": "icon.png",
   "author": "brpaz",
   "license": "MIT",
@@ -10,9 +10,9 @@
     {
       "icon": "icon.png",
       "name": "list",
-      "subtitle": "NocoDB Bases",
-      "title": "Search Bases",
-      "description": "List your NocoDB bases and open them in the browser",
+      "subtitle": "NocoDB",
+      "title": "Search Tables",
+      "description": "List every table across your NocoDB bases and open one in the browser",
       "mode": "view"
     }
   ],

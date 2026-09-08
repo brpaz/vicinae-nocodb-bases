@@ -1,11 +1,12 @@
-# NocoDB Bases
+# NocoDB
 
-> Quickly access your NocoDB bases
+> Quickly access the tables in your NocoDB bases
 
 ## 🎯 Features
 
-- Lists all bases on your self-hosted NocoDB instance.
-- Open a base directly in your browser, or copy its link.
+- Lists every table across every base on your self-hosted NocoDB instance, grouped by base, in one searchable list.
+- Open a table directly in your browser (its default view), or copy the link.
+- Results are cached for 5 minutes so repeat opens are instant; use **Refresh** to force a reload.
 
 ## 🚀 Getting Started
 
@@ -43,11 +44,12 @@ npm run dev
 
 ## 🧰 Usage
 
-Set the **NocoDB URL** and **API Token** preferences (an API token can be created under Account Settings > Tokens in NocoDB), then open **Search Bases**. Hit Enter on a base to open it in your browser, or use **Copy Link**.
+Set the **NocoDB URL** and **API Token** preferences (an API token can be created under Account Settings > Tokens in NocoDB), then open **Search Tables**. Hit Enter on a table to open its default view in your browser, or use **Copy Link**.
 
 ### Requirements
 
-- A self-hosted NocoDB instance (OSS `GET /api/v2/meta/bases/` endpoint — this doesn't target NocoDB Cloud's workspace-scoped API).
+- A self-hosted NocoDB instance (OSS meta API — this doesn't target NocoDB Cloud's separate API).
+- The dashboard URL scheme (`/dashboard/#/v/<workspace>/<base>/<table>/<view>/`) was confirmed against a real instance, not from NocoDB's docs (which don't document it) — if your instance uses a different NocoDB version with a different URL scheme, opening a table may 404 even though the underlying data fetch is correct.
 
 ## 📝 License
 
