@@ -16,8 +16,16 @@ export async function listBases(
 
   let response: Response;
   try {
-    response = await fetch(url, { headers: { 'xc-token': apiToken } });
-  } catch {
+    response = await fetch(url, {
+      headers: { 'xc-token': apiToken },
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      throw new Error(
+        `Timed out reaching ${hostUrl}. Check the NocoDB URL preference.`
+      );
+    }
     throw new Error(
       `Could not reach ${hostUrl}. Check the NocoDB URL preference.`
     );
