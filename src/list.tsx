@@ -46,8 +46,12 @@ export default function Command() {
           <List.Item
             key={base.id}
             title={base.title}
-            subtitle={base.description}
-            icon={Icon.Layers}
+            // The native renderer rejects an explicit "subtitle": null (vs.
+            // the key being absent), which is what subtitle={undefined}
+            // serializes to — so this prop must be omitted entirely, not
+            // just passed an undefined value, when there's no description.
+            {...(base.description ? { subtitle: base.description } : {})}
+            icon={Icon.AppWindowList}
             actions={
               <ActionPanel>
                 <Action.OpenInBrowser title="Open in Browser" url={url} />
